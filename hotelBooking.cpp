@@ -96,3 +96,101 @@ public:
         return c_id; // Return the client ID if successful
     }
 };
+
+int main()
+{
+    int userInput; // difining input variable
+
+    // base class pointer and other class objects
+    client *cli = new client;
+    // displaying the options
+    while (true)
+    {
+    // options to create and check client id
+    A:
+        cout << endl
+             << "Type 1 to Search for a Client Id" << endl
+             << "Type 2 to Register Yourself" << endl
+             << "Type 0 Exit" << endl;
+        cin >> userInput;
+
+        // exception handing if gives unnecessary inputs
+        try
+        {
+            if (userInput == 1)
+            {
+                cli->check();
+            }
+            else if (userInput == 2)
+            {
+                cli->create();
+            }
+            else if (userInput == 0)
+            {
+
+                cout << endl
+                     << "Thank you for using our service" << endl;
+                delete cli;
+                break;
+            }
+            else
+                throw(userInput);
+        }
+        catch (...)
+        {
+            cout << endl
+                 << "Typed Undisired Input!" << endl
+                 << "Please Try Again!" << endl;
+            goto A;
+        }
+    B:
+        cout << endl
+             << "Type 1 to Book a Hotel Room" << endl
+             << "Type 2 to Book Convention Hall" << endl
+             << "Type 3 to Reserve Restaurant" << endl
+             << "Type 4 to Checkout Hotel Room" << endl
+             << "Type 0 to Return to Main Menu" << endl;
+        cin >> userInput;
+        // exception handing if gives unnecessary inputs
+
+        try
+        {
+            if (userInput == 1)
+            {
+                cout << "Hotel Booking Coming soon!" << endl;
+                goto B;
+            }
+
+            else if (userInput == 2)
+            {
+                cout << "Convention Hall Booking Coming soon!" << endl;
+                goto B;
+            }
+            else if (userInput == 3)
+            {
+                cout << "Restaurant Booking Coming soon!" << endl;
+                goto B;
+            }
+            else if (userInput == 4)
+            {
+                cout << "Hotel Room Check out Coming soon!" << endl;
+                goto B;
+            }
+            else if (userInput == 0)
+            {
+                cout << endl
+                     << "Thank you! Returning to Main Menu" << endl;
+                goto A;
+            }
+            else
+                throw(userInput);
+        }
+        catch (...)
+        {
+            cout << endl
+                 << "Typed Undisired Input!" << endl
+                 << "Please Try Again!" << endl;
+            goto B;
+        }
+    }
+}
