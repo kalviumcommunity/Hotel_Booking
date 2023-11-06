@@ -11,8 +11,8 @@ class ClientFileManager
 private:
     string fileName;
     int count = 0;
-    string phn;
     fstream clientFile;
+    string phn;
 
 public:
     ClientFileManager(const string &fileName)
@@ -22,6 +22,8 @@ public:
 
     virtual string checkClient(const string &targetPhn)
     {
+
+        // opening the file
         clientFile.open(fileName, ios::in);
         if (!clientFile.is_open())
         {
@@ -63,6 +65,7 @@ public:
         if (count == 0)
         {
             clientFile.close(); // Close the file
+
             return "Client not registered!\n";
         }
 
@@ -113,6 +116,7 @@ private:
     ClientFileManager *clientFileManager;
 
 public:
+    int costCnt;
     Client(const string &fileName)
     {
         clientFileManager = new ClientFileManager(fileName);
@@ -168,8 +172,97 @@ public:
     }
 };
 
-class client_hotelroom : virtual public Client
+class Conventionhall : virtual public Client
+
 {
+private:
+    string day;
+    string time;
+    string BookedBy;
+    string targetDay;
+    string targetTime;
+    string res;
+    int clientId;
+
+public:
+    Conventionhall() : Client("client.csv"){};
+
+    ~Conventionhall(){};
+
+    // check function to check if the hall is empty in the required time
+
+    string checkConvention()
+    {
+        res = "Not booked";
+        // opening the text file and taking necessary informations
+        ifstream convntionalHallFile("conventionhall.txt");
+        if (!convntionalHallFile)
+            cout << endl
+                 << "Unable to open conventionhall file" << endl;
+
+        cout << endl
+             << "Please enter the date(Ex: 22/10/2023):";
+        cin >> targetDay;
+        // If the required time exists then the result(res) will be changed to booked
+        while (!convntionalHallFile.eof())
+        {
+            convntionalHallFile >> day >> time >> BookedBy;
+            if (day == targetDay)
+                res = "Booked";
+        }
+
+        convntionalHallFile.close();
+        return res;
+    };
+    // updating the booking of the convention hall
+    int bookConvention()
+    {
+        // taking necessary infos to book a time
+
+        cout << "Please again enter the required date(Ex: 22/10/2023): ";
+        cin >> targetDay;
+        cout << endl
+             << "Please enter the required time(Ex: 07:00 / 11:00): ";
+        cin >> targetTime;
+        cout << endl
+             << "Please enter the client id: ";
+        cin >> clientId;
+        // calculating the cost
+        costCnt += 20000;
+        // opening the text file to append and returning the cost
+        ofstream outf("conventionhall.txt", ios::app);
+        outf << endl
+             << targetDay << " " << targetTime << " " << clientId;
+        outf.close();
+        return costCnt;
+    }
+};
+
+class cost : public Conventionhall
+{
+private:
+    int paid;
+
+public:
+    cost() : Client("client.csv"), Conventionhall(){};
+    void displayCost(int cost)
+    {
+        cout << endl
+             << "Total cost:" << cost << endl;
+        cout << endl
+             << "How much amount you want to pay: ";
+        cin >> paid;
+        cout << endl
+             << "Due Amount: " << cost - paid << endl;
+    }
+    // !need to implement this in future
+    //  operator overloading to compute the cost
+    //  cost operator-(cost c)
+    //  {
+    //      cost cost;
+    //      cost.cost_cnt = c.cost_cnt - this->cost_cnt;
+    //      return cost;
+    //  }
 };
 
 int main()
@@ -189,6 +282,8 @@ int main()
     // base class pointer and class objects
     Client *client;
     Client client1("client.csv");
+    Conventionhall hall;
+    cost c2;
     // displaying the options
     while (true)
     {
@@ -259,8 +354,29 @@ int main()
 
             else if (userInput == CONVENTION_HALL_BOOKING)
             {
-                cout << "Convention Hall Booking Coming soon!" << endl;
-                goto B;
+                client = &hall;
+                client->costCnt = 0;
+                string res = hall.checkConvention();
+                if (res == "Booked")
+                {
+                    cout << endl
+                         << "Already Booked on this Date, Sorry!" << endl;
+                    goto B;
+                }
+                cout << endl
+                     << "Type 1 to book , Type 0 to not" << endl;
+                cin >> userInput;
+                if (userInput == 1)
+                {
+                    c2.displayCost(hall.bookConvention());
+                    cout << endl
+                         << "Convention Hall is successfully booked, Thank You!" << endl;
+                }
+                else if (userInput == 0)
+                {
+                    cout << "Thank you!" << endl;
+                    goto B;
+                }
             }
             else if (userInput == RESTAURANT_BOOKING)
             {
