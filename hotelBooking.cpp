@@ -10,7 +10,7 @@ class ClientFileManager
 {
 private:
     string fileName;
-    int count = 0;
+    int count;
     fstream clientFile;
     string phn;
 
@@ -22,7 +22,7 @@ public:
 
     virtual string checkClient(const string &targetPhn)
     {
-
+        count = 0;
         // opening the file
         clientFile.open(fileName, ios::in);
         if (!clientFile.is_open())
@@ -113,13 +113,18 @@ private:
     string clientAddress;
     string clientAadhar;
     string targetPhn;
-    ClientFileManager *clientFileManager;
+    static const int ARRAY_SIZE = 5;
+    ClientFileManager *clientFileManager[ARRAY_SIZE];
 
 public:
     int costCnt;
     Client(const string &fileName)
     {
-        clientFileManager = new ClientFileManager(fileName);
+        clientFileManager[0] = new ClientFileManager(fileName); // Initialize the first element
+        for (int i = 1; i < ARRAY_SIZE; ++i)
+        {
+            clientFileManager[i] = nullptr; // Initialize other array elements to null
+        }
     }
     // Function to save client data to a file and return the details as a string
 
@@ -131,7 +136,7 @@ public:
     virtual string isClientRegistered()
     {
 
-        string result = clientFileManager->checkClient(targetPhn);
+        string result = clientFileManager[0]->checkClient(targetPhn);
         cout << endl
              << result << endl;
         return result;
@@ -155,7 +160,7 @@ public:
 
         if (ClientFileManager("client.csv").checkClient(clientPhoneNo) == "Client not registered!\n")
         {
-            string savedClient = clientFileManager->registerClient(clientId, clientName, clientPhoneNo, clientAddress, clientAadhar);
+            string savedClient = clientFileManager[0]->registerClient(clientId, clientName, clientPhoneNo, clientAddress, clientAadhar);
             cout << endl
                  << "Client Registered Successfully!" << endl
                  << savedClient << endl;
@@ -168,7 +173,74 @@ public:
     }
     ~Client()
     {
-        delete clientFileManager;
+        for (int i = 0; i < ARRAY_SIZE; ++i)
+        {
+            delete clientFileManager[i]; // Release memory for each object
+        }
+    }
+};
+
+class Restaurant : virtual public Client
+{
+private:
+    string day;
+    string time;
+    string resBook;
+    string targetDay;
+    string targetTime;
+    string res;
+    string clientId;
+
+public:
+    Restaurant() : Client("client.csv"){};
+
+    ~Restaurant(){};
+    // check if the restaurant is booked or not
+    string checkRestaraunt()
+    {
+        res = "Not booked";
+        // input the necessary infos
+        ifstream restarauntFile("restaurant.txt");
+        if (!restarauntFile)
+        {
+            cout << endl
+                 << "Unable to open Restaurant file" << endl;
+        }
+        cout << endl
+             << "Please enter the date(Ex: 01/11/2023):";
+        cin >> targetDay;
+        cout << endl
+             << "Please enter the time(Ex: 07:00):";
+        cin >> targetTime;
+        // comparing with the required time and giving result
+        while (!restarauntFile.eof())
+        {
+            restarauntFile >> day >> time;
+            if (day == targetDay && time == targetTime)
+                res = "Booked";
+        }
+
+        restarauntFile.close();
+        return res;
+    }
+    // booking the restaurant
+    int bookRestaraunt()
+    {
+        // taking necessary data
+        cout << "Please again enter the required date(Ex: 22/10/2023): ";
+        cin >> targetDay;
+        cout << "Please enter the required time(Ex: 07:00 / 11:00): ";
+        cin >> targetTime;
+        cout << "Please enter the Client id: ";
+        cin >> clientId;
+        // cost count
+        costCnt += 200;
+        // write the text file and returning cost
+        ofstream restarauntFile("restaurant.txt", ios::app);
+        restarauntFile << endl
+                       << targetDay << " " << targetTime << " " << clientId;
+        restarauntFile.close();
+        return costCnt;
     }
 };
 
@@ -225,20 +297,20 @@ public:
              << "Please enter the required time(Ex: 07:00 / 11:00): ";
         cin >> targetTime;
         cout << endl
-             << "Please enter the client id: ";
+             << "Please enter the Client id: ";
         cin >> clientId;
         // calculating the cost
         costCnt += 20000;
         // opening the text file to append and returning the cost
-        ofstream outf("conventionhall.txt", ios::app);
-        outf << endl
-             << targetDay << " " << targetTime << " " << clientId;
-        outf.close();
+        ofstream convntionalHallFile("conventionhall.txt", ios::app);
+        convntionalHallFile << endl
+                            << targetDay << " " << targetTime << " " << clientId;
+        convntionalHallFile.close();
         return costCnt;
     }
 };
 
-class cost : public Conventionhall
+class cost : public Conventionhall, public Restaurant
 {
 private:
     int paid;
@@ -260,7 +332,7 @@ public:
     //  cost operator-(cost c)
     //  {
     //      cost cost;
-    //      cost.cost_cnt = c.cost_cnt - this->cost_cnt;
+    //      cost.costCnt = c.costCnt - this->costCnt;
     //      return cost;
     //  }
 };
@@ -283,6 +355,7 @@ int main()
     Client *client;
     Client client1("client.csv");
     Conventionhall hall;
+    Restaurant restaurant;
     cost c2;
     // displaying the options
     while (true)
@@ -380,8 +453,29 @@ int main()
             }
             else if (userInput == RESTAURANT_BOOKING)
             {
-                cout << "Restaurant Booking Coming soon!" << endl;
-                goto B;
+                client = &restaurant;
+                client->costCnt = 0;
+                string res = restaurant.checkRestaraunt();
+                if (res == "Booked")
+                {
+                    cout << endl
+                         << "Already Booked on this Date and Time, Sorry!" << endl;
+                    goto B;
+                }
+                cout << endl
+                     << "Type 1 to book , Type 0 to not" << endl;
+                cin >> userInput;
+                if (userInput == 1)
+                {
+                    c2.displayCost(restaurant.bookRestaraunt());
+                    cout << endl
+                         << "Restraunt is successfully reserved, Thank You!" << endl;
+                }
+                else if (userInput == 0)
+                {
+                    cout << "Thank you!" << endl;
+                    goto B;
+                }
             }
             else if (userInput == HOTEL_ROOM_CHECKOUT)
             {
