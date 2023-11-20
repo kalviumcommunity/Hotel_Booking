@@ -6,7 +6,14 @@
 
 using namespace std;
 
-class ClientFileManager
+class AbstractClientManager {
+public:
+    virtual string checkClient(const string &targetPhn) = 0;
+    virtual string registerClient(int clientId, const string &clientName, const string &clientPhoneNo, const string &clientAddress, const string &clientAadhar) = 0;
+};
+
+
+class ClientFileManager : public AbstractClientManager
 {
 private:
     string fileName;
@@ -20,7 +27,7 @@ public:
         this->fileName = fileName;
     };
 
-    virtual string checkClient(const string &targetPhn)
+    virtual string checkClient(const string &targetPhn) override
     {
         count = 0;
         // opening the file
@@ -72,7 +79,7 @@ public:
         clientFile.close(); // Close the file
     }
 
-    string registerClient(int clientId, const string &clientName, const string &clientPhoneNo, const string &clientAddress, const string &clientAadhar)
+    string registerClient(int clientId, const string &clientName, const string &clientPhoneNo, const string &clientAddress, const string &clientAadhar) override
     {
         clientFile.open(fileName, ios::app | ios::out);
         if (!clientFile.is_open())
@@ -177,6 +184,165 @@ public:
         {
             delete clientFileManager[i]; // Release memory for each object
         }
+    }
+};
+
+class Hotelroom : virtual public Client
+{
+private:
+    int roomId;
+    string roomType;
+    string roomBooked;
+    int targetRoomId;
+    int cId;
+    string clientId;
+
+public:
+    Hotelroom() : Client("client.csv"){};
+
+    ~Hotelroom(){};
+    // extented check function to check if a hotel room is vacant
+    void checkHotelRooms()
+    {
+        // opening txt file to read
+        ifstream hotelRoomFile("hotelroom.txt");
+
+        // if the text file is not available
+        if (!hotelRoomFile)
+        {
+            cout << endl
+                 << "Unable to open hotelroom file" << endl;
+            return;
+        }
+
+        cout << endl
+             << "hotelrooms to book:" << endl;
+
+        // reading the whole file to print available hotel rooms
+        while (hotelRoomFile >> roomId >> roomType >> roomBooked)
+        {
+            if (roomBooked == "NULL")
+                cout << roomId << " " << roomType << endl;
+        }
+
+        // Check if the last read was successful (optional)
+        if (!hotelRoomFile.eof() && roomBooked == "NULL")
+        {
+            cout << roomId << " " << roomType << endl;
+        }
+
+        // closing the file
+        hotelRoomFile.close();
+    }
+    // extented update funtion to book a hotel room
+    int bookHotelRoom()
+    {
+        // taking the information to book a definite room
+        cout << "Please enter the required room id: ";
+        cin >> targetRoomId;
+        cout << "Please enter the client id: ";
+        cin >> cId;
+
+        // changing the int c_id to string client_id to compare
+        stringstream ss;
+        ss << cId;
+        clientId = ss.str();
+
+        // opening the text file to read and append
+        ifstream hotelRoomFile1("hotelroom.txt");
+        ofstream hotelRoomFile2("hotelroom1.txt");
+
+        if (!hotelRoomFile1)
+        {
+            cout << endl
+                 << "Unable to open hotelroom file" << endl;
+            return 0; // or another appropriate value indicating an error
+        }
+
+        int roomId;
+        string roomType;
+        string roomBooked;
+
+        // taking all the data to book the required room
+        while (hotelRoomFile1 >> roomId >> roomType >> roomBooked)
+        {
+            if (roomId == targetRoomId)
+            {
+                // using the base class data member to calculate client's cost
+                costCnt += 1000;
+                cout << roomId << " " << roomType << endl;
+                // updating the room id with client_id to make it booked
+                hotelRoomFile2 << roomId << " " << roomType << " " << clientId << endl;
+            }
+            else
+            {
+                // if it isn't the required room then simply rewriting it
+                hotelRoomFile2 << roomId << " " << roomType << " " << roomBooked << endl;
+            }
+        }
+
+        // closing the two files to save update
+        hotelRoomFile2.close();
+        hotelRoomFile1.close();
+
+        // deleting previous text file then renaming the updated text file to replace the previous one
+        remove("hotelroom.txt");
+        rename("hotelroom1.txt", "hotelroom.txt");
+
+        // return the cost of the client
+        return costCnt;
+    }
+    // checkout a booked room to make it available again
+    void checkout()
+    {
+        // getting necessary infos and changing to string
+        cout << "Please enter the client id:";
+        cin >> cId;
+
+        string clientId;
+        stringstream ss;
+        ss << cId;
+        clientId = ss.str();
+
+        // read & write the text file
+        ifstream hotelRoomFile1("hotelroom.txt");
+        ofstream hotelRoomFile2("hotelroom1.txt");
+
+        if (!hotelRoomFile1 || !hotelRoomFile2)
+        {
+            cout << endl
+                 << "Unable to open hotelroom file" << endl;
+            return;
+        }
+
+        int roomId;
+        string roomType;
+        string roomBooked;
+
+        // updating the rooms which the client holds to make them available
+        while (hotelRoomFile1 >> roomId >> roomType >> roomBooked)
+        {
+            if (roomBooked == clientId)
+            {
+                cout << endl
+                     << "Checking Out all Rooms Booked By you!" << endl
+                     << roomId << " " << roomType << endl;
+                hotelRoomFile2 << roomId << " " << roomType << " "
+                               << "NULL" << endl;
+            }
+            else
+            {
+                hotelRoomFile2 << roomId << " " << roomType << " " << roomBooked << endl;
+            }
+        }
+
+        // closing the file
+        hotelRoomFile1.close();
+        hotelRoomFile2.close();
+
+        // replacing the previous file
+        remove("hotelroom.txt");
+        rename("hotelroom1.txt", "hotelroom.txt");
     }
 };
 
@@ -354,6 +520,7 @@ int main()
     // base class pointer and class objects
     Client *client;
     Client client1("client.csv");
+    Hotelroom h1;
     Conventionhall hall;
     Restaurant restaurant;
     cost c2;
@@ -421,7 +588,24 @@ int main()
         {
             if (userInput == HOTEL_BOOKING)
             {
-                cout << "Hotel Booking Coming soon!" << endl;
+                {
+                    client = &h1;
+                    client->costCnt = 0;
+                    h1.checkHotelRooms();
+                    cout << endl
+                         << "Type 1 to checkin , Type 0 to not" << endl;
+                    cin >> userInput;
+                    if (userInput)
+                    {
+                        int i, d;
+                        cout << endl
+                             << "How many rooms do you need?" << endl;
+                        cin >> i;
+                        while (i--)
+                            d = h1.bookHotelRoom();
+                        c2.displayCost(d);
+                    }
+                }
                 goto B;
             }
 
@@ -479,7 +663,7 @@ int main()
             }
             else if (userInput == HOTEL_ROOM_CHECKOUT)
             {
-                cout << "Hotel Room Check out Coming soon!" << endl;
+                h1.checkout();
                 goto B;
             }
             else if (userInput == RETURN_TO_MAIN_MENU)
