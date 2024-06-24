@@ -6,14 +6,13 @@
 
 using namespace std;
 
-class AbstractClientManager {
+class IClientManager {
 public:
     virtual string checkClient(const string &targetPhn) = 0;
     virtual string registerClient(int clientId, const string &clientName, const string &clientPhoneNo, const string &clientAddress, const string &clientAadhar) = 0;
 };
 
-
-class ClientFileManager : public AbstractClientManager
+class ClientFileManager : public IClientManager
 {
 private:
     string fileName;
